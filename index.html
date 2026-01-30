@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Clasificador de Elementos Patrimoniales</title>
+  <title>Clasificador de elementos patrimoniales</title>
   <style>
     body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; margin: 0; background: #f6f7fb; color: #111; }
     .wrap { max-width: 900px; margin: 0 auto; padding: 16px; }
@@ -16,8 +16,6 @@
     button:disabled { opacity: .6; cursor: not-allowed; }
     .muted { color: #555; font-size: 13px; }
     .pill { display: inline-block; padding: 4px 10px; border-radius: 999px; background: #eef2ff; color: #1e40af; font-weight: 700; font-size: 12px; }
-    .ok { color: #166534; font-weight: 700; }
-    .bad { color: #991b1b; font-weight: 700; }
     .gridQ { display: grid; grid-template-columns: 1fr; gap: 12px; }
     @media (min-width: 760px){ .gridQ { grid-template-columns: 1fr 1fr; } }
     .q { border: 1px solid #eef0f7; border-radius: 12px; padding: 12px; background: #fafbff; }
@@ -25,6 +23,7 @@
     .result { white-space: pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background: #0b1220; color: #e5e7eb; padding: 12px; border-radius: 12px; }
   </style>
 </head>
+
 <body>
   <div class="wrap">
     <div class="card">
@@ -38,6 +37,7 @@
           <label>Nombre y apellidos</label>
           <input id="alumno" placeholder="Ej: Laura García López" autocomplete="name">
         </div>
+
         <div>
           <label>Número de elementos</label>
           <select id="num">
@@ -47,14 +47,16 @@
             <option value="20">20</option>
           </select>
         </div>
+
         <div>
           <label>Modo</label>
           <select id="modo">
             <option value="practica" selected>Práctica (muestra opciones)</option>
             <option value="examen">Examen (muestra opciones)</option>
           </select>
-          <div class="muted">En ambos casos el resultado se guarda. (Si quieres, luego lo hago “examen real” sin pistas).</div>
+          <div class="muted">En ambos casos el resultado se guarda.</div>
         </div>
+
         <div>
           <button id="btnStart">Empezar</button>
         </div>
@@ -78,487 +80,161 @@
     </div>
   </div>
 
-<script>
-  // ====== 1) PEGA AQUÍ TU URL DE APPS SCRIPT ======
-  const SCRIPT_URL = "<!doctype html>
-<html lang="es">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Clasificador de Elementos Patrimoniales</title>
-  <style>
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; margin: 0; background: #f6f7fb; color: #111; }
-    .wrap { max-width: 900px; margin: 0 auto; padding: 16px; }
-    .card { background: white; border-radius: 14px; padding: 16px; box-shadow: 0 6px 20px rgba(0,0,0,.06); margin: 12px 0; }
-    h1 { font-size: 20px; margin: 0 0 8px; }
-    .row { display: grid; grid-template-columns: 1fr; gap: 10px; }
-    label { font-weight: 600; font-size: 14px; }
-    input, select, button { font-size: 16px; padding: 10px 12px; border-radius: 10px; border: 1px solid #d8dbe6; width: 100%; box-sizing: border-box; }
-    button { border: 0; background: #2563eb; color: white; font-weight: 700; cursor: pointer; }
-    button:disabled { opacity: .6; cursor: not-allowed; }
-    .muted { color: #555; font-size: 13px; }
-    .pill { display: inline-block; padding: 4px 10px; border-radius: 999px; background: #eef2ff; color: #1e40af; font-weight: 700; font-size: 12px; }
-    .ok { color: #166534; font-weight: 700; }
-    .bad { color: #991b1b; font-weight: 700; }
-    .gridQ { display: grid; grid-template-columns: 1fr; gap: 12px; }
-    @media (min-width: 760px){ .gridQ { grid-template-columns: 1fr 1fr; } }
-    .q { border: 1px solid #eef0f7; border-radius: 12px; padding: 12px; background: #fafbff; }
-    .q h3 { margin: 0 0 8px; font-size: 15px; }
-    .result { white-space: pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background: #0b1220; color: #e5e7eb; padding: 12px; border-radius: 12px; }
-  </style>
-</head>
-<body>
-  <div class="wrap">
-    <div class="card">
-      <h1>Clasificador de elementos patrimoniales</h1>
-      <div class="muted">Rellena tu nombre, elige cuántos elementos y clasifica. Al enviar verás corrección y tu resultado se guardará.</div>
-    </div>
+  <script>
+    // 1) PEGA AQUÍ TU URL DE APPS SCRIPT (DEBE TERMINAR EN /exec)
+    const SCRIPT_URL = "PEGA_AQUI_TU_URL_DE_WEB_APP";
 
-    <div class="card">
-      <div class="row">
-        <div>
-          <label>Nombre y apellidos</label>
-          <input id="alumno" placeholder="Ej: Laura García López" autocomplete="name">
-        </div>
-        <div>
-          <label>Número de elementos</label>
-          <select id="num">
-            <option value="10">10</option>
-            <option value="12">12</option>
-            <option value="15" selected>15</option>
-            <option value="20">20</option>
-          </select>
-        </div>
-        <div>
-          <label>Modo</label>
-          <select id="modo">
-            <option value="practica" selected>Práctica (muestra opciones)</option>
-            <option value="examen">Examen (muestra opciones)</option>
-          </select>
-          <div class="muted">En ambos casos el resultado se guarda. (Si quieres, luego lo hago “examen real” sin pistas).</div>
-        </div>
-        <div>
-          <button id="btnStart">Empezar</button>
-        </div>
-      </div>
-    </div>
+    const MASAS = [
+      "Activo no corriente",
+      "Activo corriente",
+      "Patrimonio neto",
+      "Pasivo no corriente",
+      "Pasivo corriente"
+    ];
 
-    <div class="card" id="zonaPreguntas" style="display:none;">
-      <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
-        <div class="pill" id="estado"></div>
-        <button id="btnEnviar" disabled>Enviar</button>
-      </div>
-      <div style="height:10px"></div>
-      <div class="gridQ" id="preguntas"></div>
-    </div>
+    const ELEMENTOS = {
+      "Terrenos y bienes naturales": "Activo no corriente",
+      "Construcciones": "Activo no corriente",
+      "Maquinaria": "Activo no corriente",
+      "Mobiliario": "Activo no corriente",
+      "Equipos informáticos": "Activo no corriente",
+      "Aplicaciones informáticas": "Activo no corriente",
+      "Patentes": "Activo no corriente",
+      "Inversiones financieras a largo plazo": "Activo no corriente",
 
-    <div class="card" id="zonaResultado" style="display:none;">
-      <h2 style="margin:0 0 10px;">Resultado</h2>
-      <div id="resumen"></div>
-      <div style="height:10px"></div>
-      <div class="result" id="detalle"></div>
-    </div>
-  </div>
+      "Mercaderías (existencias)": "Activo corriente",
+      "Materias primas (existencias)": "Activo corriente",
+      "Clientes": "Activo corriente",
+      "Deudores": "Activo corriente",
+      "Efectos comerciales a cobrar": "Activo corriente",
+      "Inversiones financieras a corto plazo": "Activo corriente",
+      "Bancos": "Activo corriente",
+      "Caja": "Activo corriente",
 
-<script>
-  // ====== 1) PEGA AQUÍ TU URL DE APPS SCRIPT ======
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzQ_lzNzxeZB5IkN79DslrLMochfFlALpYe2KXF76nlzvQHKVPkCI33qxDdVxAerupS7A/exec";
+      "Capital social": "Patrimonio neto",
+      "Reservas": "Patrimonio neto",
+      "Resultado del ejercicio": "Patrimonio neto",
 
-  // ====== Banco de elementos y solución ======
-  const MASAS = [
-    "Activo no corriente",
-    "Activo corriente",
-    "Patrimonio neto",
-    "Pasivo no corriente",
-    "Pasivo corriente"
-  ];
+      "Préstamos a largo plazo": "Pasivo no corriente",
+      "Deudas a largo plazo con entidades de crédito": "Pasivo no corriente",
+      "Proveedores de inmovilizado a largo plazo": "Pasivo no corriente",
 
-  const ELEMENTOS = {
-    "Terrenos y bienes naturales": "Activo no corriente",
-    "Construcciones": "Activo no corriente",
-    "Maquinaria": "Activo no corriente",
-    "Mobiliario": "Activo no corriente",
-    "Equipos informáticos": "Activo no corriente",
-    "Aplicaciones informáticas": "Activo no corriente",
-    "Patentes": "Activo no corriente",
-    "Inversiones financieras a largo plazo": "Activo no corriente",
-
-    "Mercaderías (existencias)": "Activo corriente",
-    "Materias primas (existencias)": "Activo corriente",
-    "Clientes": "Activo corriente",
-    "Deudores": "Activo corriente",
-    "Efectos comerciales a cobrar": "Activo corriente",
-    "Inversiones financieras a corto plazo": "Activo corriente",
-    "Bancos": "Activo corriente",
-    "Caja": "Activo corriente",
-
-    "Capital social": "Patrimonio neto",
-    "Reservas": "Patrimonio neto",
-    "Resultado del ejercicio": "Patrimonio neto",
-
-    "Préstamos a largo plazo": "Pasivo no corriente",
-    "Deudas a largo plazo con entidades de crédito": "Pasivo no corriente",
-    "Proveedores de inmovilizado a largo plazo": "Pasivo no corriente",
-
-    "Proveedores": "Pasivo corriente",
-    "Acreedores": "Pasivo corriente",
-    "Efectos comerciales a pagar": "Pasivo corriente",
-    "Deudas a corto plazo con entidades de crédito": "Pasivo corriente",
-    "Hacienda Pública acreedora": "Pasivo corriente",
-    "Remuneraciones pendientes de pago": "Pasivo corriente"
-  };
-
-  // Config de nota
-  const NOTA_MAX = 10;
-  const PENAL = 0.5; // -0,5 por fallo
-
-  // Estado
-  let seleccion = [];
-  let respuestas = {}; // elemento -> masa elegida
-
-  const $ = (id) => document.getElementById(id);
-
-  function shuffle(arr){
-    const a = [...arr];
-    for(let i=a.length-1;i>0;i--){
-      const j = Math.floor(Math.random()*(i+1));
-      [a[i], a[j]] = [a[j], a[i]];
-    }
-    return a;
-  }
-
-  function renderPreguntas(){
-    $("zonaPreguntas").style.display = "";
-    $("zonaResultado").style.display = "none";
-    $("preguntas").innerHTML = "";
-    respuestas = {};
-
-    $("estado").textContent = `Preguntas: ${seleccion.length}`;
-
-    seleccion.forEach((el) => {
-      const div = document.createElement("div");
-      div.className = "q";
-      div.innerHTML = `
-        <h3>${el}</h3>
-        <label>Selecciona la masa</label>
-        <select>
-          <option value="" selected>— Elige —</option>
-          ${MASAS.map(m => `<option value="${m}">${m}</option>`).join("")}
-        </select>
-      `;
-      const sel = div.querySelector("select");
-      sel.addEventListener("change", () => {
-        respuestas[el] = sel.value;
-        // habilitar enviar si están todas respondidas
-        const completas = seleccion.every(x => respuestas[x] && respuestas[x].trim().length > 0);
-        $("btnEnviar").disabled = !completas;
-      });
-      $("preguntas").appendChild(div);
-    });
-  }
-
-  function corregir(){
-    let fallos = 0;
-    const errores = [];
-    seleccion.forEach((el) => {
-      const correcta = ELEMENTOS[el];
-      const elegida = respuestas[el] || "";
-      if (elegida !== correcta){
-        fallos++;
-        errores.push({ elemento: el, tu_masa: elegida, correcta });
-      }
-    });
-    const aciertos = seleccion.length - fallos;
-    let nota = NOTA_MAX - (fallos * PENAL);
-    if (nota < 0) nota = 0;
-    nota = Math.round(nota * 100) / 100;
-
-    const errores_detalle = errores.map(e => `${e.elemento} | ${e.tu_masa || "(sin responder)"} -> ${e.correcta}`).join(" || ");
-
-    return { aciertos, fallos, nota, errores, errores_detalle };
-  }
-
-  async function enviarAGoogleSheets(payload){
-    // Apps Script acepta POST con JSON
-    const res = await fetch(SCRIPT_URL, {
-      method: "POST",
-      body: JSON.stringify(payload),
-      headers: { "Content-Type": "application/json" }
-    });
-    return res.json();
-  }
-
-  $("btnStart").addEventListener("click", () => {
-    const alumno = $("alumno").value.trim();
-    const n = parseInt($("num").value, 10);
-
-    if (alumno.length < 3){
-      alert("Escribe nombre y apellidos (mínimo 3 caracteres).");
-      return;
-    }
-
-    const lista = shuffle(Object.keys(ELEMENTOS));
-    seleccion = lista.slice(0, n);
-    renderPreguntas();
-    $("btnEnviar").disabled = true;
-  });
-
-  $("btnEnviar").addEventListener("click", async () => {
-    const alumno = $("alumno").value.trim();
-
-    const { aciertos, fallos, nota, errores, errores_detalle } = corregir();
-
-    // Mostrar resultado al alumno
-    $("zonaResultado").style.display = "";
-    $("resumen").innerHTML = `
-      <div><b>Alumno:</b> ${alumno}</div>
-      <div><b>Aciertos:</b> ${aciertos}/${seleccion.length}</div>
-      <div><b>Fallos:</b> ${fallos}</div>
-      <div><b>Nota (sobre 10):</b> ${nota}</div>
-      <div class="muted">Penalización: -${PENAL} por fallo</div>
-    `;
-
-    const lines = [];
-    if (errores.length === 0){
-      lines.push("✅ Perfecto: todo correcto.");
-    } else {
-      lines.push("❌ Errores:");
-      errores.forEach(e => {
-        lines.push(`- ${e.elemento}`);
-        lines.push(`  Tu respuesta: ${e.tu_masa || "(sin responder)"}`);
-        lines.push(`  Correcta:     ${e.correcta}`);
-        lines.push("");
-      });
-    }
-    $("detalle").textContent = lines.join("\n");
-
-    // Guardar en Google Sheets
-    $("btnEnviar").disabled = true;
-    $("btnEnviar").textContent = "Guardando…";
-
-    const payload = {
-      alumno,
-      num_elementos: seleccion.length,
-      aciertos,
-      fallos,
-      nota,
-      errores_detalle,
-      respuestas
+      "Proveedores": "Pasivo corriente",
+      "Acreedores": "Pasivo corriente",
+      "Efectos comerciales a pagar": "Pasivo corriente",
+      "Deudas a corto plazo con entidades de crédito": "Pasivo corriente",
+      "Hacienda Pública acreedora": "Pasivo corriente",
+      "Remuneraciones pendientes de pago": "Pasivo corriente"
     };
 
-    try {
-      const out = await enviarAGoogleSheets(payload);
-      if (!out.ok){
-        alert("Se guardó mal. Error: " + (out.error || "desconocido"));
-      } else {
-        $("btnEnviar").textContent = "✅ Guardado";
+    const NOTA_MAX = 10;
+    const PENAL = 0.5;
+
+    let seleccion = [];
+    let respuestas = {};
+
+    const $ = (id) => document.getElementById(id);
+
+    function shuffle(arr){
+      const a = [...arr];
+      for(let i=a.length-1;i>0;i--){
+        const j = Math.floor(Math.random()*(i+1));
+        [a[i], a[j]] = [a[j], a[i]];
       }
-    } catch (e){
-      alert("No se pudo guardar. Revisa la URL del Script y permisos.\n\n" + e);
-      $("btnEnviar").textContent = "Enviar";
-      $("btnEnviar").disabled = false;
+      return a;
     }
-  });
-</script>
-</body>
-</html>
-";
 
-  // ====== Banco de elementos y solución ======
-  const MASAS = [
-    "Activo no corriente",
-    "Activo corriente",
-    "Patrimonio neto",
-    "Pasivo no corriente",
-    "Pasivo corriente"
-  ];
+    function renderPreguntas(){
+      $("zonaPreguntas").style.display = "";
+      $("zonaResultado").style.display = "none";
+      $("preguntas").innerHTML = "";
+      respuestas = {};
+      $("estado").textContent = `Preguntas: ${seleccion.length}`;
 
-  const ELEMENTOS = {
-    "Terrenos y bienes naturales": "Activo no corriente",
-    "Construcciones": "Activo no corriente",
-    "Maquinaria": "Activo no corriente",
-    "Mobiliario": "Activo no corriente",
-    "Equipos informáticos": "Activo no corriente",
-    "Aplicaciones informáticas": "Activo no corriente",
-    "Patentes": "Activo no corriente",
-    "Inversiones financieras a largo plazo": "Activo no corriente",
-
-    "Mercaderías (existencias)": "Activo corriente",
-    "Materias primas (existencias)": "Activo corriente",
-    "Clientes": "Activo corriente",
-    "Deudores": "Activo corriente",
-    "Efectos comerciales a cobrar": "Activo corriente",
-    "Inversiones financieras a corto plazo": "Activo corriente",
-    "Bancos": "Activo corriente",
-    "Caja": "Activo corriente",
-
-    "Capital social": "Patrimonio neto",
-    "Reservas": "Patrimonio neto",
-    "Resultado del ejercicio": "Patrimonio neto",
-
-    "Préstamos a largo plazo": "Pasivo no corriente",
-    "Deudas a largo plazo con entidades de crédito": "Pasivo no corriente",
-    "Proveedores de inmovilizado a largo plazo": "Pasivo no corriente",
-
-    "Proveedores": "Pasivo corriente",
-    "Acreedores": "Pasivo corriente",
-    "Efectos comerciales a pagar": "Pasivo corriente",
-    "Deudas a corto plazo con entidades de crédito": "Pasivo corriente",
-    "Hacienda Pública acreedora": "Pasivo corriente",
-    "Remuneraciones pendientes de pago": "Pasivo corriente"
-  };
-
-  // Config de nota
-  const NOTA_MAX = 10;
-  const PENAL = 0.5; // -0,5 por fallo
-
-  // Estado
-  let seleccion = [];
-  let respuestas = {}; // elemento -> masa elegida
-
-  const $ = (id) => document.getElementById(id);
-
-  function shuffle(arr){
-    const a = [...arr];
-    for(let i=a.length-1;i>0;i--){
-      const j = Math.floor(Math.random()*(i+1));
-      [a[i], a[j]] = [a[j], a[i]];
+      seleccion.forEach((el) => {
+        const div = document.createElement("div");
+        div.className = "q";
+        div.innerHTML = `
+          <h3>${el}</h3>
+          <label>Selecciona la masa</label>
+          <select>
+            <option value="" selected>— Elige —</option>
+            ${MASAS.map(m => `<option value="${m}">${m}</option>`).join("")}
+          </select>
+        `;
+        const sel = div.querySelector("select");
+        sel.addEventListener("change", () => {
+          respuestas[el] = sel.value;
+          const completas = seleccion.every(x => respuestas[x] && respuestas[x].trim().length > 0);
+          $("btnEnviar").disabled = !completas;
+        });
+        $("preguntas").appendChild(div);
+      });
     }
-    return a;
-  }
 
-  function renderPreguntas(){
-    $("zonaPreguntas").style.display = "";
-    $("zonaResultado").style.display = "none";
-    $("preguntas").innerHTML = "";
-    respuestas = {};
+    function corregir(){
+      let fallos = 0;
+      const errores = [];
+      seleccion.forEach((el) => {
+        const correcta = ELEMENTOS[el];
+        const elegida = respuestas[el] || "";
+        if (elegida !== correcta){
+          fallos++;
+          errores.push({ elemento: el, tu_masa: elegida, correcta });
+        }
+      });
+      const aciertos = seleccion.length - fallos;
+      let nota = NOTA_MAX - (fallos * PENAL);
+      if (nota < 0) nota = 0;
+      nota = Math.round(nota * 100) / 100;
 
-    $("estado").textContent = `Preguntas: ${seleccion.length}`;
+      const errores_detalle = errores
+        .map(e => `${e.elemento} | ${e.tu_masa || "(sin responder)"} -> ${e.correcta}`)
+        .join(" || ");
 
-    seleccion.forEach((el) => {
-      const div = document.createElement("div");
-      div.className = "q";
-      div.innerHTML = `
-        <h3>${el}</h3>
-        <label>Selecciona la masa</label>
-        <select>
-          <option value="" selected>— Elige —</option>
-          ${MASAS.map(m => `<option value="${m}">${m}</option>`).join("")}
-        </select>
+      return { aciertos, fallos, nota, errores, errores_detalle };
+    }
+
+    async function enviarAGoogleSheets(payload){
+      const res = await fetch(SCRIPT_URL, {
+        method: "POST",
+        body: JSON.stringify(payload),
+        headers: { "Content-Type": "application/json" }
+      });
+      return res.json();
+    }
+
+    $("btnStart").addEventListener("click", () => {
+      const alumno = $("alumno").value.trim();
+      const n = parseInt($("num").value, 10);
+
+      if (alumno.length < 3){
+        alert("Escribe nombre y apellidos (mínimo 3 caracteres).");
+        return;
+      }
+      if (!SCRIPT_URL || SCRIPT_URL.includes("PEGA_AQUI")){
+        alert("Falta configurar SCRIPT_URL (la URL de Apps Script).");
+        return;
+      }
+
+      const lista = shuffle(Object.keys(ELEMENTOS));
+      seleccion = lista.slice(0, n);
+      renderPreguntas();
+      $("btnEnviar").disabled = true;
+    });
+
+    $("btnEnviar").addEventListener("click", async () => {
+      const alumno = $("alumno").value.trim();
+      const { aciertos, fallos, nota, errores, errores_detalle } = corregir();
+
+      $("zonaResultado").style.display = "";
+      $("resumen").innerHTML = `
+        <div><b>Alumno:</b> ${alumno}</div>
+        <div><b>Aciertos:</b> ${aciertos}/${seleccion.length}</div>
+        <div><b>Fallos:</b> ${fallos}</div>
+        <div><b>Nota (sobre 10):</b> ${nota}</div>
+        <div class="muted">Penalización: -${PENAL} por fallo</div>
       `;
-      const sel = div.querySelector("select");
-      sel.addEventListener("change", () => {
-        respuestas[el] = sel.value;
-        // habilitar enviar si están todas respondidas
-        const completas = seleccion.every(x => respuestas[x] && respuestas[x].trim().length > 0);
-        $("btnEnviar").disabled = !completas;
-      });
-      $("preguntas").appendChild(div);
-    });
-  }
 
-  function corregir(){
-    let fallos = 0;
-    const errores = [];
-    seleccion.forEach((el) => {
-      const correcta = ELEMENTOS[el];
-      const elegida = respuestas[el] || "";
-      if (elegida !== correcta){
-        fallos++;
-        errores.push({ elemento: el, tu_masa: elegida, correcta });
-      }
-    });
-    const aciertos = seleccion.length - fallos;
-    let nota = NOTA_MAX - (fallos * PENAL);
-    if (nota < 0) nota = 0;
-    nota = Math.round(nota * 100) / 100;
-
-    const errores_detalle = errores.map(e => `${e.elemento} | ${e.tu_masa || "(sin responder)"} -> ${e.correcta}`).join(" || ");
-
-    return { aciertos, fallos, nota, errores, errores_detalle };
-  }
-
-  async function enviarAGoogleSheets(payload){
-    // Apps Script acepta POST con JSON
-    const res = await fetch(SCRIPT_URL, {
-      method: "POST",
-      body: JSON.stringify(payload),
-      headers: { "Content-Type": "application/json" }
-    });
-    return res.json();
-  }
-
-  $("btnStart").addEventListener("click", () => {
-    const alumno = $("alumno").value.trim();
-    const n = parseInt($("num").value, 10);
-
-    if (alumno.length < 3){
-      alert("Escribe nombre y apellidos (mínimo 3 caracteres).");
-      return;
-    }
-
-    const lista = shuffle(Object.keys(ELEMENTOS));
-    seleccion = lista.slice(0, n);
-    renderPreguntas();
-    $("btnEnviar").disabled = true;
-  });
-
-  $("btnEnviar").addEventListener("click", async () => {
-    const alumno = $("alumno").value.trim();
-
-    const { aciertos, fallos, nota, errores, errores_detalle } = corregir();
-
-    // Mostrar resultado al alumno
-    $("zonaResultado").style.display = "";
-    $("resumen").innerHTML = `
-      <div><b>Alumno:</b> ${alumno}</div>
-      <div><b>Aciertos:</b> ${aciertos}/${seleccion.length}</div>
-      <div><b>Fallos:</b> ${fallos}</div>
-      <div><b>Nota (sobre 10):</b> ${nota}</div>
-      <div class="muted">Penalización: -${PENAL} por fallo</div>
-    `;
-
-    const lines = [];
-    if (errores.length === 0){
-      lines.push("✅ Perfecto: todo correcto.");
-    } else {
-      lines.push("❌ Errores:");
-      errores.forEach(e => {
-        lines.push(`- ${e.elemento}`);
-        lines.push(`  Tu respuesta: ${e.tu_masa || "(sin responder)"}`);
-        lines.push(`  Correcta:     ${e.correcta}`);
-        lines.push("");
-      });
-    }
-    $("detalle").textContent = lines.join("\n");
-
-    // Guardar en Google Sheets
-    $("btnEnviar").disabled = true;
-    $("btnEnviar").textContent = "Guardando…";
-
-    const payload = {
-      alumno,
-      num_elementos: seleccion.length,
-      aciertos,
-      fallos,
-      nota,
-      errores_detalle,
-      respuestas
-    };
-
-    try {
-      const out = await enviarAGoogleSheets(payload);
-      if (!out.ok){
-        alert("Se guardó mal. Error: " + (out.error || "desconocido"));
-      } else {
-        $("btnEnviar").textContent = "✅ Guardado";
-      }
-    } catch (e){
-      alert("No se pudo guardar. Revisa la URL del Script y permisos.\n\n" + e);
-      $("btnEnviar").textContent = "Enviar";
-      $("btnEnviar").disabled = false;
-    }
-  });
-</script>
-</body>
-</html>
+      const lines = [];
+      if (errores.length === 0){
