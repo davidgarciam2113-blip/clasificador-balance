@@ -13,6 +13,8 @@
     label { font-weight: 600; font-size: 14px; }
     input, select, button { font-size: 16px; padding: 10px 12px; border-radius: 10px; border: 1px solid #d8dbe6; width: 100%; box-sizing: border-box; }
     button { border: 0; background: #2563eb; color: white; font-weight: 700; cursor: pointer; }
+    button.secondary { background: #111827; }
+    button.ghost { background: transparent; color: #111; border: 1px solid #d8dbe6; }
     button:disabled { opacity: .6; cursor: not-allowed; }
     .muted { color: #555; font-size: 13px; }
     .pill { display: inline-block; padding: 4px 10px; border-radius: 999px; background: #eef2ff; color: #1e40af; font-weight: 700; font-size: 12px; }
@@ -20,7 +22,13 @@
     @media (min-width: 760px){ .gridQ { grid-template-columns: 1fr 1fr; } }
     .q { border: 1px solid #eef0f7; border-radius: 12px; padding: 12px; background: #fafbff; }
     .q h3 { margin: 0 0 8px; font-size: 15px; }
-    .result { white-space: pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background: #0b1220; color: #e5e7eb; padding: 12px; border-radius: 12px; }
+    .result { white-space: pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background: #0b1220; color: #e5e7eb; padding: 12px; border-radius: 12px; overflow:auto; }
+    .twoCol { display:grid; gap:12px; }
+    @media (min-width: 760px){ .twoCol { grid-template-columns: 1fr 1fr; } }
+    .box { border:1px solid #eef0f7; border-radius: 12px; padding: 12px; background:#fafbff; }
+    .box h3 { margin:0 0 8px; font-size: 14px; }
+    ul { margin: 0; padding-left: 18px; }
+    .small { font-size: 12px; }
   </style>
 </head>
 
@@ -29,8 +37,7 @@
 
   <div class="card">
     <h1>Clasificador de elementos patrimoniales</h1>
-    <div class="muted">EBAU – Comunidad de Madrid</div>
-    <div class="muted">Cada alumno obtiene una versión distinta automáticamente (sin códigos del profesor).</div>
+    <div class="muted">Modo estudio (EBAU Madrid): cada tanda cambia. Guarda tu último intento, tu mejor intento y lo que aún no te ha salido.</div>
   </div>
 
   <div class="card">
@@ -38,40 +45,56 @@
       <div>
         <label>Nombre y apellidos</label>
         <input id="alumno" placeholder="Ej: Laura García López" autocomplete="name">
-        <div class="muted">Recomendación: escribir siempre igual (mismos apellidos/acentos) para mantener la misma versión.</div>
+        <div class="muted">Escríbelo siempre igual para ver tu historial.</div>
       </div>
 
       <div>
-        <label>Número de elementos</label>
+        <label>Modo estudio</label>
         <select id="num">
-          <option value="10">10</option>
-          <option value="15" selected>15</option>
-          <option value="20">20</option>
-          <option value="25">25</option>
-          <option value="30">30</option>
-          <option value="40">40</option>
-          <option value="50">50</option>
+          <option value="30" selected>Estudiar 30 elementos</option>
+          <option value="35">Estudiar 35 elementos</option>
+          <option value="50">Estudiar TODOS (50)</option>
         </select>
       </div>
 
-      <div>
+      <div style="display:grid; gap:10px;">
         <button id="btnStart">Empezar</button>
+        <button id="btnNueva" class="secondary" disabled>Nueva tanda (cambia preguntas)</button>
+        <button id="btnReset" class="ghost" disabled>Eliminar mi historial (este dispositivo)</button>
       </div>
+    </div>
+  </div>
+
+  <div class="card" id="zonaProgreso" style="display:none;">
+    <div class="twoCol">
+      <div class="box">
+        <h3>Último intento</h3>
+        <div id="ultimoIntento" class="muted">—</div>
+      </div>
+      <div class="box">
+        <h3>Mejor intento</h3>
+        <div id="mejorIntento" class="muted">—</div>
+      </div>
+    </div>
+    <div style="height:10px"></div>
+    <div class="box">
+      <h3>Elementos que aún no te han aparecido</h3>
+      <div id="faltanResumen" class="muted">—</div>
+      <div id="faltanLista" class="small" style="margin-top:8px;"></div>
     </div>
   </div>
 
   <div class="card" id="zonaPreguntas" style="display:none;">
     <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
       <div class="pill" id="estado"></div>
-      <div class="pill" id="version"></div>
-      <button id="btnEnviar" disabled>Enviar</button>
+      <button id="btnEnviar" disabled>Corregir</button>
     </div>
     <div style="height:10px"></div>
     <div class="gridQ" id="preguntas"></div>
   </div>
 
   <div class="card" id="zonaResultado" style="display:none;">
-    <h2 style="margin:0 0 10px;">Resultado</h2>
+    <h2 style="margin:0 0 10px;">Resultado de esta tanda</h2>
     <div id="resumen"></div>
     <div style="height:10px"></div>
     <div class="result" id="detalle"></div>
@@ -152,81 +175,120 @@ const ELEMENTOS = {
   "Remuneraciones pendientes de pago": "Pasivo corriente"
 };
 
-/* ================= VERSIONES AUTOMÁTICAS (SIN PROFESOR) =================
-   Semilla = hash(nombre_normalizado + "|" + device_id)
-   - device_id se genera 1 vez y se guarda en el navegador (localStorage)
-   - mismo alumno en el mismo dispositivo => misma versión
-*/
+const ALL_ITEMS = Object.keys(ELEMENTOS);
 
-function normalizarTexto(s){
-  return (s || "")
-    .trim()
-    .toLowerCase()
-    .normalize("NFD")                 // separa acentos
-    .replace(/[\u0300-\u036f]/g, "")  // elimina diacríticos
-    .replace(/\s+/g, " ");
-}
-
-// hash de texto a 32-bit (xmur3)
-function xmur3(str) {
-  let h = 1779033703 ^ str.length;
-  for (let i = 0; i < str.length; i++) {
-    h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
-    h = (h << 13) | (h >>> 19);
-  }
-  return function() {
-    h = Math.imul(h ^ (h >>> 16), 2246822507);
-    h = Math.imul(h ^ (h >>> 13), 3266489909);
-    h ^= (h >>> 16);
-    return h >>> 0;
-  }
-}
-
-// PRNG determinista (mulberry32)
-function mulberry32(a) {
-  return function() {
-    let t = a += 0x6D2B79F5;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  }
-}
-
-function shuffleWithRng(arr, rng){
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(rng() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
-function getDeviceId(){
-  const key = "clasificador_device_id_v1";
-  let id = localStorage.getItem(key);
-  if (id) return id;
-
-  // Genera un id aleatorio (UUID si existe)
-  if (window.crypto && crypto.randomUUID) {
-    id = crypto.randomUUID();
-  } else {
-    id = "dev-" + Math.random().toString(16).slice(2) + "-" + Date.now().toString(16);
-  }
-
-  localStorage.setItem(key, id);
-  return id;
-}
-
-/* ================= LÓGICA DEL PROGRAMA ================= */
+/* ================= CONFIG NOTA / ESTADO ================= */
 
 const NOTA_MAX = 10;
 const PENAL = 0.5;
 
 let seleccion = [];
 let respuestas = {};
-let versionId = "";
+let alumnoActualKey = "";
+
+/* ================= HELPERS DOM ================= */
 
 const $ = id => document.getElementById(id);
+
+function shuffle(arr){
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function normalizarNombre(s){
+  return (s || "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")   // elimina acentos
+    .replace(/\s+/g, " ");            // colapsa espacios
+}
+
+function formatFecha(ms){
+  const d = new Date(ms);
+  const pad = n => String(n).padStart(2,"0");
+  return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+/* ================= PERSISTENCIA (localStorage) =================
+   Guardamos por alumno (por nombre normalizado) en este dispositivo.
+   Estructura:
+   {
+     seen: { "Elemento": true, ... },      // elementos que ya le han aparecido alguna vez
+     attempts: [
+       { ts, n, aciertos, fallos, nota, seleccion: [...], errores: [...] }
+     ]
+   }
+*/
+
+function storageKeyForAlumno(nombre){
+  return "clasificador_ebau_mad_v1|" + normalizarNombre(nombre);
+}
+
+function loadData(key){
+  try{
+    const raw = localStorage.getItem(key);
+    if(!raw) return { seen: {}, attempts: [] };
+    const obj = JSON.parse(raw);
+    if(!obj || typeof obj !== "object") return { seen: {}, attempts: [] };
+    if(!obj.seen || typeof obj.seen !== "object") obj.seen = {};
+    if(!Array.isArray(obj.attempts)) obj.attempts = [];
+    return obj;
+  } catch {
+    return { seen: {}, attempts: [] };
+  }
+}
+
+function saveData(key, data){
+  localStorage.setItem(key, JSON.stringify(data));
+}
+
+function computeBestAttempt(attempts){
+  if(!attempts.length) return null;
+  // Mejor por nota; si empate, por más aciertos; si empate, más reciente
+  return attempts.reduce((best, a) => {
+    if(!best) return a;
+    if(a.nota > best.nota) return a;
+    if(a.nota === best.nota && a.aciertos > best.aciertos) return a;
+    if(a.nota === best.nota && a.aciertos === best.aciertos && a.ts > best.ts) return a;
+    return best;
+  }, null);
+}
+
+function renderProgreso(nombre){
+  const key = storageKeyForAlumno(nombre);
+  const data = loadData(key);
+
+  const last = data.attempts.length ? data.attempts[data.attempts.length - 1] : null;
+  const best = computeBestAttempt(data.attempts);
+
+  $("zonaProgreso").style.display = "";
+
+  $("ultimoIntento").innerHTML = last
+    ? `<b>${last.nota.toFixed(2)}/10</b> — Aciertos ${last.aciertos}/${last.n} — Fallos ${last.fallos} — ${formatFecha(last.ts)}`
+    : "Aún no has hecho intentos en este dispositivo.";
+
+  $("mejorIntento").innerHTML = best
+    ? `<b>${best.nota.toFixed(2)}/10</b> — Aciertos ${best.aciertos}/${best.n} — Fallos ${best.fallos} — ${formatFecha(best.ts)}`
+    : "Aún no hay mejor intento (haz el primero).";
+
+  const seenSet = data.seen || {};
+  const faltan = ALL_ITEMS.filter(el => !seenSet[el]);
+
+  $("faltanResumen").textContent = `Te faltan ${faltan.length} de ${ALL_ITEMS.length} elementos por ver.`;
+  $("faltanLista").innerHTML = faltan.length
+    ? `<ul>${faltan.map(x => `<li>${x}</li>`).join("")}</ul>`
+    : "✅ Ya te han aparecido todos los elementos al menos una vez.";
+
+  // Habilitar botón reset para ese alumno
+  $("btnReset").disabled = false;
+}
+
+/* ================= UI PREGUNTAS / CORRECCIÓN ================= */
 
 function renderPreguntas(){
   $("zonaPreguntas").style.display = "";
@@ -234,7 +296,6 @@ function renderPreguntas(){
   $("preguntas").innerHTML = "";
   respuestas = {};
   $("estado").textContent = `Preguntas: ${seleccion.length}`;
-  $("version").textContent = `Versión: ${versionId}`;
 
   seleccion.forEach(el => {
     const div = document.createElement("div");
@@ -260,7 +321,6 @@ function renderPreguntas(){
 function corregir(){
   let fallos = 0;
   const errores = [];
-
   seleccion.forEach(el => {
     const elegida = respuestas[el] || "";
     const correcta = ELEMENTOS[el];
@@ -275,43 +335,79 @@ function corregir(){
   if (nota < 0) nota = 0;
   nota = Math.round(nota * 100) / 100;
 
-  return { aciertos, fallos, nota, errores };
+  return { aciertos, fallos, nota, errores, n: seleccion.length };
 }
 
-$("btnStart").addEventListener("click", () => {
-  const alumno = $("alumno").value.trim();
-  if (alumno.length < 3){
+/* ================= FLUJO PRINCIPAL ================= */
+
+function iniciarTanda(){
+  const nombre = $("alumno").value.trim();
+  if (nombre.length < 3){
     alert("Escribe nombre y apellidos (mínimo 3 caracteres).");
     return;
   }
 
+  alumnoActualKey = storageKeyForAlumno(nombre);
+
+  // Carga progreso/historial
+  renderProgreso(nombre);
+
+  // Selección aleatoria nueva (cada vez)
   const n = parseInt($("num").value, 10);
+  const lista = shuffle(ALL_ITEMS);
+  seleccion = lista.slice(0, Math.min(n, ALL_ITEMS.length));
 
-  const deviceId = getDeviceId();
-  const seedText = normalizarTexto(alumno) + "|" + deviceId;
+  // Marcar como "vistos" los elementos que han aparecido en esta tanda
+  const data = loadData(alumnoActualKey);
+  seleccion.forEach(el => data.seen[el] = true);
+  saveData(alumnoActualKey, data);
 
-  const seedFn = xmur3(seedText);
-  const seed = seedFn();
+  // Actualiza “faltan” tras marcar vistos
+  renderProgreso(nombre);
 
-  versionId = "V-" + seed.toString(16).toUpperCase().padStart(8, "0");
-
-  const rng = mulberry32(seed);
-  const lista = shuffleWithRng(Object.keys(ELEMENTOS), rng);
-
-  seleccion = lista.slice(0, Math.min(n, lista.length));
+  // Render de preguntas
   renderPreguntas();
+  $("btnNueva").disabled = false;
   $("btnEnviar").disabled = true;
-});
+}
+
+function guardarIntento(resultado){
+  const data = loadData(alumnoActualKey);
+  const intento = {
+    ts: Date.now(),
+    n: resultado.n,
+    aciertos: resultado.aciertos,
+    fallos: resultado.fallos,
+    nota: resultado.nota,
+    seleccion: [...seleccion],
+    errores: resultado.errores
+  };
+  data.attempts.push(intento);
+  saveData(alumnoActualKey, data);
+}
+
+/* ================= EVENTOS ================= */
+
+$("btnStart").addEventListener("click", iniciarTanda);
+$("btnNueva").addEventListener("click", iniciarTanda);
 
 $("btnEnviar").addEventListener("click", () => {
-  const alumno = $("alumno").value.trim();
+  const nombre = $("alumno").value.trim();
+  if (!alumnoActualKey || alumnoActualKey !== storageKeyForAlumno(nombre)){
+    // Por si el alumno cambia el nombre a mitad
+    alumnoActualKey = storageKeyForAlumno(nombre);
+  }
+
   const r = corregir();
 
+  // Guarda intento
+  guardarIntento(r);
+
+  // Muestra resultado de esta tanda
   $("zonaResultado").style.display = "";
   $("resumen").innerHTML = `
-    <div><b>Alumno:</b> ${alumno}</div>
-    <div><b>${versionId}</b></div>
-    <div><b>Aciertos:</b> ${r.aciertos}/${seleccion.length}</div>
+    <div><b>Alumno:</b> ${nombre}</div>
+    <div><b>Aciertos:</b> ${r.aciertos}/${r.n}</div>
     <div><b>Fallos:</b> ${r.fallos}</div>
     <div><b>Nota:</b> ${r.nota.toFixed(2)} / 10</div>
     <div class="muted">Penalización: -${PENAL} por fallo</div>
@@ -330,11 +426,33 @@ $("btnEnviar").addEventListener("click", () => {
     });
   }
   $("detalle").textContent = lines.join("\n");
+
+  // Actualiza panel de progreso (último y mejor)
+  renderProgreso(nombre);
+});
+
+$("btnReset").addEventListener("click", () => {
+  const nombre = $("alumno").value.trim();
+  if (nombre.length < 3){
+    alert("Escribe tu nombre para eliminar tu historial en este dispositivo.");
+    return;
+  }
+  const key = storageKeyForAlumno(nombre);
+  localStorage.removeItem(key);
+
+  $("zonaProgreso").style.display = "none";
+  $("zonaPreguntas").style.display = "none";
+  $("zonaResultado").style.display = "none";
+  $("btnNueva").disabled = true;
+  $("btnReset").disabled = true;
+
+  alert("Historial eliminado en este dispositivo para: " + nombre);
 });
 </script>
 
 </body>
 </html>
+
 
 
 
