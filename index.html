@@ -237,5 +237,50 @@
       `;
 
       const lines = [];
-      if (errores.length === 0){
+          if (errores.length === 0){
+        lines.push("✅ Perfecto: todo correcto.");
+      } else {
+        lines.push("❌ Errores:");
+        errores.forEach(e => {
+          lines.push(`- ${e.elemento}`);
+          lines.push(`  Tu respuesta: ${e.tu_masa || "(sin responder)"}`);
+          lines.push(`  Correcta:     ${e.correcta}`);
+          lines.push("");
+        });
+      }
+      $("detalle").textContent = lines.join("\n");
+
+      $("btnEnviar").disabled = true;
+      const oldText = $("btnEnviar").textContent;
+      $("btnEnviar").textContent = "Guardando…";
+
+      const payload = {
+        alumno,
+        num_elementos: seleccion.length,
+        aciertos,
+        fallos,
+        nota,
+        errores_detalle,
+        respuestas
+      };
+
+      try {
+        const out = await enviarAGoogleSheets(payload);
+        if (!out.ok){
+          alert("No se pudo guardar. Error: " + (out.error || "desconocido"));
+          $("btnEnviar").textContent = oldText;
+          $("btnEnviar").disabled = false;
+        } else {
+          $("btnEnviar").textContent = "✅ Guardado";
+        }
+      } catch (e){
+        alert("No se pudo guardar. Revisa la URL del Script y permisos.\n\n" + e);
+        $("btnEnviar").textContent = oldText;
+        $("btnEnviar").disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
+
 
